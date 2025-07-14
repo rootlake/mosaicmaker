@@ -13,6 +13,12 @@ from PIL import Image
 from sklearn.cluster import KMeans
 import svgwrite
 from collections import OrderedDict
+from reportlab.graphics import renderPDF
+from reportlab.lib.pagesizes import letter, A4
+from reportlab.lib.units import inch
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image as RLImage
+from reportlab.lib.styles import getSampleStyleSheet
+import svglib.svglib
 
 # Constants
 LETTER_WIDTH_INCHES = 8.5
@@ -23,6 +29,7 @@ DEFAULT_COLORS = 12
 MAX_COLORS = 26  # Limited by alphabet for simple labeling
 INPUT_DIR = "input"  # Directory containing input images
 OUTPUT_DIR = "output"  # Directory for output files
+PDF_DIR = "PDFs"  # Directory for PDF files
 
 # Define the colored pencil palette
 pencil_palette = [
@@ -237,10 +244,15 @@ class GridGenerator:
 class SVGRenderer:
     """Renders grid and legend as SVG files."""
     
-    def __init__(self, grid_generator, output_prefix):
+    def __init__(self, grid_generator, output_prefix, num_colors=None, grid_size=None):
         """Initialize with grid data and output path."""
         self.grid = grid_generator
         self.output_prefix = output_prefix
+        self.num_colors = num_colors or len(grid_generator.color_map)
+        self.grid_size = grid_size or grid_generator.grid_size
+        
+        # Create filename suffix with parameters
+        self.param_suffix = f"_{self.num_colors}color_{self.grid_size}grid"
         
         # Ensure output directory exists
         if not os.path.exists(OUTPUT_DIR):
@@ -249,11 +261,18 @@ class SVGRenderer:
     def render_grid(self):
         """Render grid as SVG with numbered cells."""
         # Create SVG drawing
-        output_path = os.path.join(OUTPUT_DIR, f"{self.output_prefix}_grid.svg")
+        output_path = os.path.join(OUTPUT_DIR, f"{self.output_prefix}_grid{self.param_suffix}.svg")
         dwg = svgwrite.Drawing(
             output_path,
             size=(f"{self.grid.width}px", f"{self.grid.height}px")
         )
+        
+        # Add white background
+        dwg.add(dwg.rect(
+            insert=(0, 0),
+            size=(self.grid.width, self.grid.height),
+            fill="white"
+        ))
         
         # Draw grid cells
         for row in range(self.grid.rows):
@@ -282,6 +301,8 @@ class SVGRenderer:
                     text_anchor="middle",
                     dominant_baseline="middle",
                     font_size=self.grid.grid_size//3,
+                    font_family="Arial, Helvetica, sans-serif",
+                    font_weight="bold",
                     fill="gray",
                     fill_opacity=0.2
                 ))
@@ -293,7 +314,7 @@ class SVGRenderer:
     def render_colored_grid(self):
         """Render colored grid without numbers."""
         # Create SVG drawing
-        output_path = os.path.join(OUTPUT_DIR, f"{self.output_prefix}_colored.svg")
+        output_path = os.path.join(OUTPUT_DIR, f"{self.output_prefix}_colored{self.param_suffix}.svg")
         dwg = svgwrite.Drawing(
             output_path,
             size=(f"{self.grid.width}px", f"{self.grid.height}px")
@@ -326,7 +347,7 @@ class SVGRenderer:
     def render_combined_grid(self):
         """Render colored grid with numbers."""
         # Create SVG drawing
-        output_path = os.path.join(OUTPUT_DIR, f"{self.output_prefix}_combined.svg")
+        output_path = os.path.join(OUTPUT_DIR, f"{self.output_prefix}_combined{self.param_suffix}.svg")
         dwg = svgwrite.Drawing(
             output_path,
             size=(f"{self.grid.width}px", f"{self.grid.height}px")
@@ -363,6 +384,8 @@ class SVGRenderer:
                     text_anchor="middle",
                     dominant_baseline="middle",
                     font_size=self.grid.grid_size//3,
+                    font_family="Arial, Helvetica, sans-serif",
+                    font_weight="bold",
                     fill=text_color
                 ))
                 
@@ -373,13 +396,20 @@ class SVGRenderer:
     def render_legend(self):
         """Render color legend as SVG."""
         # Create SVG drawing for legend
-        output_path = os.path.join(OUTPUT_DIR, f"{self.output_prefix}_legend.svg")
+        output_path = os.path.join(OUTPUT_DIR, f"{self.output_prefix}_key{self.param_suffix}.svg")
         legend_width = 400
         legend_height = 50 * len(self.grid.color_map)
         dwg = svgwrite.Drawing(
             output_path,
             size=(f"{legend_width}px", f"{legend_height}px")
         )
+        
+        # Add white background
+        dwg.add(dwg.rect(
+            insert=(0, 0),
+            size=(legend_width, legend_height),
+            fill="white"
+        ))
         
         # Add title
         dwg.add(dwg.text(
@@ -429,6 +459,46 @@ class SVGRenderer:
         # Save legend SVG
         dwg.save()
         return output_path
+    
+    def export_to_pdf(self, svg_type="grid"):
+        """Export SVG to PDF format."""
+        # Ensure PDF directory exists
+        if not os.path.exists(PDF_DIR):
+            os.makedirs(PDF_DIR)
+        
+        # Define SVG file paths
+        svg_files = {
+            "grid": os.path.join(OUTPUT_DIR, f"{self.output_prefix}_grid{self.param_suffix}.svg"),
+            "key": os.path.join(OUTPUT_DIR, f"{self.output_prefix}_key{self.param_suffix}.svg"),
+            "colored": os.path.join(OUTPUT_DIR, f"{self.output_prefix}_colored{self.param_suffix}.svg"),
+            "combined": os.path.join(OUTPUT_DIR, f"{self.output_prefix}_combined{self.param_suffix}.svg")
+        }
+        
+        svg_path = svg_files.get(svg_type)
+        if not svg_path or not os.path.exists(svg_path):
+            raise FileNotFoundError(f"SVG file not found: {svg_path}")
+        
+        # Create PDF path
+        pdf_path = os.path.join(PDF_DIR, f"{self.output_prefix}_{svg_type}{self.param_suffix}.pdf")
+        
+        try:
+            # Convert SVG to PDF using svglib and reportlab
+            drawing = svglib.svglib.svg2rlg(svg_path)
+            renderPDF.drawToFile(drawing, pdf_path)
+            return pdf_path
+        except Exception as e:
+            print(f"Error converting SVG to PDF: {str(e)}")
+            raise
+    
+    def export_both_pdfs(self):
+        """Export both grid and key PDFs."""
+        try:
+            grid_pdf = self.export_to_pdf("grid")
+            key_pdf = self.export_to_pdf("key")
+            return {"grid": grid_pdf, "key": key_pdf}
+        except Exception as e:
+            print(f"Error exporting PDFs: {str(e)}")
+            raise
 
 
 def get_available_images():
@@ -518,7 +588,7 @@ def main():
         output_prefix = args.output
     else:
         base_name = os.path.splitext(os.path.basename(input_image))[0]
-        output_prefix = f"{base_name}_mystery"
+        output_prefix = base_name
     
     # Process image
     print(f"Processing image: {input_image}")
@@ -533,16 +603,16 @@ def main():
     
     # Render SVG files
     print("Rendering SVG files...")
-    renderer = SVGRenderer(grid_generator, output_prefix)
+    renderer = SVGRenderer(grid_generator, output_prefix, args.colors, args.grid_size)
     grid_file = renderer.render_grid()
     colored_file = renderer.render_colored_grid()
     combined_file = renderer.render_combined_grid()
-    legend_file = renderer.render_legend()
+    key_file = renderer.render_legend()
     
     print(f"Mystery coloring grid saved to: {grid_file}")
     print(f"Colored grid saved to: {colored_file}")
     print(f"Combined grid saved to: {combined_file}")
-    print(f"Color legend saved to: {legend_file}")
+    print(f"Color key saved to: {key_file}")
 
 
 if __name__ == "__main__":
