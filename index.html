@@ -45,6 +45,80 @@
             width: 100%;
             /* Remove fixed height calculation */
         }
+        
+        .color-key-reference {
+            margin-bottom: 15px;
+            padding: 15px;
+            background: #1e1e1e;
+            border-radius: 6px;
+        }
+        
+        .key-title {
+            text-align: center;
+            margin: 0 0 15px 0;
+            font-size: 1.2em;
+            color: #e0e0e0;
+        }
+        
+        .color-key-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            max-width: 100%;
+        }
+        
+        .color-key-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px;
+            background: #2a2a2a;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+        
+        .color-key-number {
+            font-weight: bold;
+            min-width: 24px;
+            text-align: center;
+            color: #fff;
+        }
+        
+        .color-key-box {
+            width: 20px;
+            height: 20px;
+            border: 1px solid #666;
+            border-radius: 2px;
+            flex-shrink: 0;
+        }
+        
+        .color-key-name {
+            flex: 1;
+            color: #e0e0e0;
+            font-size: 0.85em;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 1200px) {
+            .color-key-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+        
+        @media (max-width: 800px) {
+            .color-key-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        
+        @media (max-width: 600px) {
+            .color-key-grid {
+                grid-template-columns: 1fr;
+            }
+        }
 
         .frame {
             display: flex;
@@ -280,9 +354,16 @@
             </div>
             <div class="frame">
                 <div class="frame-content">
-                    <div id="key"></div>
+                    <div id="bw-key"></div>
                 </div>
-                <h3 class="frame-title">Color Key</h3>
+                <h3 class="frame-title">Key (B&W)</h3>
+            </div>
+        </div>
+        
+        <div class="color-key-reference">
+            <h3 class="key-title">Color Key Reference</h3>
+            <div id="colorKeyGrid" class="color-key-grid">
+                <!-- Color key items will be populated here by JavaScript -->
             </div>
         </div>
 
@@ -431,7 +512,7 @@
                 }
 
                 // Clear existing images
-                ['colored', 'grid', 'key', 'combined'].forEach(id => {
+                ['colored', 'grid', 'combined', 'bw-key'].forEach(id => {
                     document.getElementById(id).innerHTML = '';
                 });
 
@@ -445,14 +526,39 @@
                         document.getElementById('grid').innerHTML = 
                             `<img src="${data.files.grid}">`;
                     }
-                    if (data.files.key) {
-                        document.getElementById('key').innerHTML = 
-                            `<img src="${data.files.key}">`;
+                    if (data.files.bw_key) {
+                        document.getElementById('bw-key').innerHTML = 
+                            `<img src="${data.files.bw_key}">`;
                     }
                     if (data.files.combined) {
                         document.getElementById('combined').innerHTML = 
                             `<img src="${data.files.combined}">`;
                     }
+                }
+                
+                // Populate HTML color key
+                if (data.colors) {
+                    const colorKeyGrid = document.getElementById('colorKeyGrid');
+                    colorKeyGrid.innerHTML = '';
+                    
+                    // Sort colors by number for consistent display
+                    const sortedColors = data.colors.sort((a, b) => a.number - b.number);
+                    
+                    sortedColors.forEach(colorInfo => {
+                        const colorItem = document.createElement('div');
+                        colorItem.className = 'color-key-item';
+                        
+                        const rgb = colorInfo.color;
+                        const rgbString = `rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`;
+                        
+                        colorItem.innerHTML = `
+                            <div class="color-key-number">${colorInfo.number}</div>
+                            <div class="color-key-box" style="background-color: ${rgbString}"></div>
+                            <div class="color-key-name">${colorInfo.name}</div>
+                        `;
+                        
+                        colorKeyGrid.appendChild(colorItem);
+                    });
                 }
                 
                 // Update processing state

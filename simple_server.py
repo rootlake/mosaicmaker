@@ -94,8 +94,43 @@ class ImageHandler(SimpleHTTPRequestHandler):
                 colors = form_data.get('colors', '12')
                 grid_size = form_data.get('grid_size', '30')
 
-                # Run the script using virtual environment
-                cmd = ['./venv/bin/python', 'mysterygen.py', filepath, '--colors', colors, '--grid-size', grid_size]
+                # Run the script using virtual environment and get color data
+                cmd = ['./venv/bin/python', '-c', f'''
+import sys
+sys.path.append('.')
+from mysterygen import *
+import json
+
+# Process the image
+processor = ImageProcessor("{filepath}", {colors})
+processor.load_and_resize()
+quantized_image, color_map, number_map, color_names = processor.quantize_colors()
+
+# Generate grid
+grid_generator = GridGenerator(quantized_image, color_map, number_map, color_names, {grid_size})
+grid_generator.generate_grid()
+
+# Render SVG files
+base_name = "{os.path.splitext(filename)[0]}"
+renderer = SVGRenderer(grid_generator, base_name, {colors}, {grid_size})
+renderer.render_grid()
+renderer.render_colored_grid()
+renderer.render_combined_grid()
+renderer.render_legend()
+renderer.render_bw_legend()
+
+# Output color data as JSON
+color_data = []
+for color_idx, color in color_map.items():
+    color_data.append({{
+        "number": int(number_map[color_idx]),
+        "color": [int(c) for c in color],
+        "name": color_names[color_idx]
+    }})
+
+print("COLOR_DATA:" + json.dumps(color_data))
+print("Processing completed successfully")
+''']
                 print(f"Running command: {' '.join(cmd)}")
                 result = subprocess.run(cmd, capture_output=True, text=True)
                 
@@ -112,6 +147,13 @@ class ImageHandler(SimpleHTTPRequestHandler):
                     error_response = {'error': error_msg}
                     self.wfile.write(json.dumps(error_response).encode())
                     return
+                
+                # Extract color data from stdout
+                color_data = []
+                for line in result.stdout.split('\n'):
+                    if line.startswith('COLOR_DATA:'):
+                        color_data = json.loads(line[11:])
+                        break
 
                 # Get output files
                 base_name = os.path.splitext(filename)[0]
@@ -120,7 +162,8 @@ class ImageHandler(SimpleHTTPRequestHandler):
                     'grid': f'{base_name}_grid{param_suffix}.svg',
                     'colored': f'{base_name}_colored{param_suffix}.svg',
                     'combined': f'{base_name}_combined{param_suffix}.svg',
-                    'key': f'{base_name}_key{param_suffix}.svg'
+                    'key': f'{base_name}_key{param_suffix}.svg',
+                    'bw_key': f'{base_name}_bw_key{param_suffix}.svg'
                 }
 
                 output_files = {}
@@ -133,6 +176,7 @@ class ImageHandler(SimpleHTTPRequestHandler):
                 response = {
                     'message': 'Image processed successfully',
                     'files': output_files,
+                    'colors': color_data,
                     'stdout': result.stdout
                 }
                 response_json = json.dumps(response)

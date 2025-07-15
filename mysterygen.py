@@ -34,93 +34,57 @@ INPUT_DIR = "input"  # Directory containing input images
 OUTPUT_DIR = "output"  # Directory for output files
 PDF_DIR = "PDFs"  # Directory for PDF files
 
-# Define the colored pencil palette
-pencil_palette = [
+# Define the colored pencil palette based on standard 48-color pencil sets
+# Colors are chosen to be distinct and match common colored pencil names
+COLORED_PENCIL_PALETTE = [
+    {"name": "Red", "rgb": [237, 28, 36]},
     {"name": "Crimson Red", "rgb": [220, 20, 60]},
-    {"name": "Lemon Yellow", "rgb": [255, 247, 0]},
-    {"name": "Yellow Orange", "rgb": [255, 140, 0]},
-    {"name": "Orange", "rgb": [255, 165, 0]},
-    {"name": "Gold", "rgb": [255, 215, 0]},
-    {"name": "Peach", "rgb": [255, 218, 185]},
-    {"name": "Light Orange", "rgb": [250, 240, 190]},
-    {"name": "Mango", "rgb": [255, 196, 87]},
-    {"name": "Yellow", "rgb": [255, 255, 0]},
-    {"name": "Light Yellow", "rgb": [255, 255, 224]},
-    {"name": "Lemon Chiffon", "rgb": [255, 245, 238]},
-    {"name": "Cornsilk", "rgb": [255, 248, 220]},
-    {"name": "Lavender", "rgb": [230, 230, 250]},
-    {"name": "Lavender Blush", "rgb": [255, 240, 245]},
-    {"name": "Misty Rose", "rgb": [255, 228, 225]},
-    {"name": "Snow", "rgb": [255, 250, 250]},
-    {"name": "Sand", "rgb": [240, 240, 230]},
-    {"name": "Gray", "rgb": [128, 128, 128]},
-    {"name": "Dim Gray", "rgb": [105, 105, 105]},
-    {"name": "Slate Gray", "rgb": [112, 128, 144]},
-    {"name": "Light Slate Gray", "rgb": [119, 136, 153]},
-    {"name": "Cool Gray", "rgb": [70, 130, 180]},
-    {"name": "Slate", "rgb": [90, 90, 90]},
-    {"name": "White", "rgb": [255, 255, 255]},
-    {"name": "Black", "rgb": [0, 0, 0]},
-    {"name": "Blue", "rgb": [0, 0, 255]},
-    {"name": "Medium Blue", "rgb": [0, 0, 205]},
-    {"name": "Dark Blue", "rgb": [0, 0, 139]},
+    {"name": "Scarlet", "rgb": [255, 36, 0]},
+    {"name": "Orange", "rgb": [255, 127, 39]},
+    {"name": "Yellow Orange", "rgb": [255, 201, 14]},
+    {"name": "Yellow", "rgb": [255, 242, 0]},
+    {"name": "Green Yellow", "rgb": [181, 230, 29]},
+    {"name": "Yellow Green", "rgb": [140, 198, 63]},
+    {"name": "Green", "rgb": [0, 162, 82]},
+    {"name": "Forest Green", "rgb": [34, 139, 34]},
+    {"name": "Blue Green", "rgb": [0, 150, 136]},
+    {"name": "Turquoise", "rgb": [64, 224, 208]},
+    {"name": "Sky Blue", "rgb": [135, 206, 235]},
+    {"name": "Blue", "rgb": [0, 114, 188]},
     {"name": "Navy Blue", "rgb": [0, 0, 128]},
-    {"name": "Midnight Blue", "rgb": [25, 25, 112]},
-    {"name": "Dark Slate Blue", "rgb": [72, 61, 139]},
-    {"name": "Slate Blue", "rgb": [106, 90, 205]},
-    {"name": "Medium Slate Blue", "rgb": [123, 104, 238]},
-    {"name": "Medium Purple", "rgb": [147, 112, 219]},
-    {"name": "Green Blue", "rgb": [0, 128, 128]},
-    {"name": "Cerulean", "rgb": [0, 128, 255]},
-    {"name": "Blue Violet", "rgb": [138, 43, 226]},
-    {"name": "Dark Violet", "rgb": [148, 0, 211]},
-    {"name": "Dark Orchid", "rgb": [153, 50, 204]},
-    {"name": "Medium Orchid", "rgb": [186, 85, 211]},
+    {"name": "Violet", "rgb": [148, 0, 211]},
     {"name": "Purple", "rgb": [128, 0, 128]},
-    {"name": "Dark Magenta", "rgb": [139, 0, 139]},
-    {"name": "Magenta", "rgb": [255, 0, 255]},
-    {"name": "Orchid", "rgb": [218, 112, 214]},
-    {"name": "Plum", "rgb": [221, 160, 221]},
-    {"name": "Violet", "rgb": [238, 130, 238]},
-    {"name": "Fuchsia", "rgb": [255, 0, 255]},
-    {"name": "Thistle", "rgb": [216, 191, 216]},
-    {"name": "Mauve", "rgb": [221, 160, 221]},
-    {"name": "Pale Rose", "rgb": [204, 153, 204]},
-    {"name": "Bubblegum", "rgb": [255, 105, 180]},
-    {"name": "Brown", "rgb": [165, 42, 42]},
-    {"name": "Saddle Brown", "rgb": [139, 69, 19]},
-    {"name": "Sienna", "rgb": [160, 82, 45]},
-    {"name": "Chocolate", "rgb": [210, 105, 30]},
-    {"name": "Peru", "rgb": [205, 133, 63]},
-    {"name": "Sandy Brown", "rgb": [244, 164, 96]},
-    {"name": "Burlywood", "rgb": [222, 184, 135]},
+    {"name": "Magenta", "rgb": [236, 0, 140]},
+    {"name": "Pink", "rgb": [255, 192, 203]},
+    {"name": "Hot Pink", "rgb": [255, 105, 180]},
+    {"name": "Brown", "rgb": [139, 69, 19]},
     {"name": "Tan", "rgb": [210, 180, 140]},
-    {"name": "Rosy Brown", "rgb": [188, 143, 143]},
-    {"name": "Dark Brown", "rgb": [150, 75, 0]},
-    {"name": "Mahogany", "rgb": [101, 67, 33]},
-    {"name": "Light Brown", "rgb": [210, 180, 140]},
-    {"name": "Taupe", "rgb": [150, 113, 23]},
-    {"name": "Wheat", "rgb": [245, 222, 179]},
+    {"name": "Peach", "rgb": [255, 218, 185]},
+    {"name": "Black", "rgb": [0, 0, 0]},
+    {"name": "Dark Gray", "rgb": [64, 64, 64]},
+    {"name": "Gray", "rgb": [128, 128, 128]},
+    {"name": "Light Gray", "rgb": [192, 192, 192]},
+    {"name": "White", "rgb": [255, 255, 255]},
+    {"name": "Maroon", "rgb": [128, 0, 0]},
+    {"name": "Burnt Orange", "rgb": [204, 85, 0]},
+    {"name": "Gold", "rgb": [255, 215, 0]},
+    {"name": "Olive Green", "rgb": [128, 128, 0]},
+    {"name": "Mint Green", "rgb": [152, 251, 152]},
+    {"name": "Teal", "rgb": [0, 128, 128]},
+    {"name": "Royal Blue", "rgb": [65, 105, 225]},
+    {"name": "Indigo", "rgb": [75, 0, 130]},
+    {"name": "Plum", "rgb": [221, 160, 221]},
+    {"name": "Rose", "rgb": [255, 0, 127]},
+    {"name": "Salmon", "rgb": [250, 128, 114]},
+    {"name": "Chocolate", "rgb": [210, 105, 30]},
     {"name": "Beige", "rgb": [245, 245, 220]},
-    {"name": "Antique White", "rgb": [250, 235, 215]},
-    {"name": "Bisque", "rgb": [255, 228, 196]},
-    {"name": "Blanched Almond", "rgb": [255, 235, 205]},
-    {"name": "Navajo White", "rgb": [255, 222, 173]},
-    {"name": "Peach Puff", "rgb": [255, 218, 185]},
-    {"name": "Moccasin", "rgb": [255, 228, 181]},
-    {"name": "Cornsilk", "rgb": [255, 248, 220]},
-    {"name": "Lemon Chiffon", "rgb": [255, 245, 238]},
-    {"name": "Seashell", "rgb": [245, 255, 250]},
-    {"name": "Mint Cream", "rgb": [240, 255, 240]},
-    {"name": "Honeydew", "rgb": [240, 255, 255]},
-    {"name": "Azure", "rgb": [240, 255, 255]},
-    {"name": "Ghost White", "rgb": [248, 248, 255]},
-    {"name": "Alice Blue", "rgb": [240, 248, 255]},
+    {"name": "Mahogany", "rgb": [192, 64, 0]},
+    {"name": "Sienna", "rgb": [160, 82, 45]},
+    {"name": "Copper", "rgb": [184, 115, 51]},
     {"name": "Lavender", "rgb": [230, 230, 250]},
-    {"name": "Lavender Blush", "rgb": [255, 240, 245]},
-    {"name": "Misty Rose", "rgb": [255, 228, 225]},
-    {"name": "Snow", "rgb": [255, 250, 250]},
-    {"name": "Sand", "rgb": [240, 240, 230]},
+    {"name": "Aqua", "rgb": [0, 255, 255]},
+    {"name": "Lime", "rgb": [0, 255, 0]},
+    {"name": "Coral", "rgb": [255, 127, 80]}
 ]
 
 class ImageProcessor:
@@ -155,28 +119,59 @@ class ImageProcessor:
         return self.image
         
     def quantize_colors(self):
-        """Quantize image to specified number of colors using k-means clustering."""
+        """Quantize image using fixed colored pencil palette."""
         # Convert image to numpy array
         img_array = np.array(self.image)
         pixels = img_array.reshape(-1, 3)
         
-        # Apply k-means clustering
-        kmeans = KMeans(n_clusters=self.num_colors, random_state=42)
+        # Create array of palette colors for vectorized distance calculation
+        palette_colors = np.array([color["rgb"] for color in COLORED_PENCIL_PALETTE])
+        
+        # Find the most representative colors from the palette
+        # Use K-means to find dominant colors in the image first
+        kmeans = KMeans(n_clusters=min(self.num_colors * 3, len(COLORED_PENCIL_PALETTE)), random_state=42)
         kmeans.fit(pixels)
+        image_centers = kmeans.cluster_centers_
         
-        # Create quantized image
-        labels = kmeans.labels_
-        centers = kmeans.cluster_centers_.astype(int)
+        # For each K-means center, find the closest palette color
+        selected_palette_indices = []
+        used_colors = set()
         
-        # Store color map and find closest color names
-        for i, center in enumerate(centers):
-            rgb = tuple(center)
-            self.color_map[i] = rgb
+        # Sort image centers by how much of the image they represent
+        center_counts = np.bincount(kmeans.labels_)
+        sorted_centers = sorted(enumerate(image_centers), key=lambda x: center_counts[x[0]], reverse=True)
+        
+        for _, center in sorted_centers:
+            if len(selected_palette_indices) >= self.num_colors:
+                break
+                
+            # Find closest palette color that hasn't been used
+            distances = np.sum((palette_colors - center)**2, axis=1)
+            sorted_palette_indices = np.argsort(distances)
             
-            # Find closest named color
-            closest_color = min(pencil_palette, 
-                              key=lambda c: np.sum((np.array(c["rgb"]) - np.array(rgb))**2))
-            self.color_names[i] = closest_color["name"]
+            for palette_idx in sorted_palette_indices:
+                if palette_idx not in used_colors:
+                    selected_palette_indices.append(palette_idx)
+                    used_colors.add(palette_idx)
+                    break
+        
+        # Ensure we have exactly the requested number of colors
+        while len(selected_palette_indices) < self.num_colors:
+            for i, color in enumerate(COLORED_PENCIL_PALETTE):
+                if i not in used_colors:
+                    selected_palette_indices.append(i)
+                    used_colors.add(i)
+                    break
+        
+        # Truncate if we somehow have too many
+        selected_palette_indices = selected_palette_indices[:self.num_colors]
+        
+        # Create color mappings using selected palette colors
+        selected_colors = [COLORED_PENCIL_PALETTE[i] for i in selected_palette_indices]
+        
+        for i, color_info in enumerate(selected_colors):
+            self.color_map[i] = tuple(color_info["rgb"])
+            self.color_names[i] = color_info["name"]
         
         # Assign random numbers to colors
         numbers = list(range(1, self.num_colors + 1))
@@ -184,9 +179,20 @@ class ImageProcessor:
         for i in range(self.num_colors):
             self.number_map[i] = numbers[i]
         
+        # Quantize the image using the selected palette
+        quantized_pixels = np.zeros_like(pixels)
+        selected_palette_colors = np.array([color["rgb"] for color in selected_colors])
+        
+        # For each pixel, find the closest color in our selected palette
+        for i in range(0, len(pixels), 10000):  # Process in chunks to avoid memory issues
+            chunk = pixels[i:i+10000]
+            distances = np.sum((chunk[:, np.newaxis] - selected_palette_colors)**2, axis=2)
+            closest_indices = np.argmin(distances, axis=1)
+            quantized_pixels[i:i+10000] = selected_palette_colors[closest_indices]
+        
         # Reconstruct quantized image
-        quantized_pixels = centers[labels].reshape(img_array.shape)
-        self.quantized_image = Image.fromarray(quantized_pixels.astype('uint8'))
+        quantized_image_array = quantized_pixels.reshape(img_array.shape)
+        self.quantized_image = Image.fromarray(quantized_image_array.astype('uint8'))
         
         return self.quantized_image, self.color_map, self.number_map, self.color_names
 
@@ -550,6 +556,66 @@ class SVGRenderer:
         dwg.save()
         return output_path
     
+    def render_bw_legend(self):
+        """Render black and white legend with numbers and color names only."""
+        # Create SVG drawing for B&W legend
+        output_path = os.path.join(OUTPUT_DIR, f"{self.output_prefix}_bw_key{self.param_suffix}.svg")
+        legend_width = 300
+        legend_height = 50 + 30 * len(self.grid.color_map)
+        dwg = svgwrite.Drawing(
+            output_path,
+            size=(f"{legend_width}px", f"{legend_height}px")
+        )
+        
+        # Add white background
+        dwg.add(dwg.rect(
+            insert=(0, 0),
+            size=(legend_width, legend_height),
+            fill="white"
+        ))
+        
+        # Add title
+        dwg.add(dwg.text(
+            "Color Key",
+            insert=(legend_width//2, 30),
+            text_anchor="middle",
+            font_size=20,
+            font_weight="bold",
+            fill="black"
+        ))
+        
+        # Draw numbers and color names only
+        y_offset = 60
+        for color_idx, color in self.grid.color_map.items():
+            number = self.grid.number_map[color_idx]
+            color_name = self.grid.color_names[color_idx]
+            
+            # Add number
+            dwg.add(dwg.text(
+                str(number),
+                insert=(30, y_offset),
+                text_anchor="end",
+                dominant_baseline="middle",
+                font_size=16,
+                font_weight="bold",
+                fill="black"
+            ))
+            
+            # Add color name
+            dwg.add(dwg.text(
+                color_name,
+                insert=(40, y_offset),
+                dominant_baseline="middle",
+                font_size=14,
+                fill="black"
+            ))
+            
+            y_offset += 30
+            
+        # Save B&W legend SVG
+        dwg.save()
+        return output_path
+    
     def export_to_pdf(self, svg_type="grid"):
         """Export SVG to PDF format."""
         # Ensure PDF directory exists
@@ -560,6 +626,7 @@ class SVGRenderer:
         svg_files = {
             "grid": os.path.join(OUTPUT_DIR, f"{self.output_prefix}_grid{self.param_suffix}.svg"),
             "key": os.path.join(OUTPUT_DIR, f"{self.output_prefix}_key{self.param_suffix}.svg"),
+            "bw_key": os.path.join(OUTPUT_DIR, f"{self.output_prefix}_bw_key{self.param_suffix}.svg"),
             "colored": os.path.join(OUTPUT_DIR, f"{self.output_prefix}_colored{self.param_suffix}.svg"),
             "combined": os.path.join(OUTPUT_DIR, f"{self.output_prefix}_combined{self.param_suffix}.svg")
         }
@@ -584,8 +651,8 @@ class SVGRenderer:
         """Export both grid and key PDFs."""
         try:
             grid_pdf = self.export_to_pdf("grid")
-            key_pdf = self.export_to_pdf("key")
-            return {"grid": grid_pdf, "key": key_pdf}
+            bw_key_pdf = self.export_to_pdf("bw_key")
+            return {"grid": grid_pdf, "bw_key": bw_key_pdf}
         except Exception as e:
             print(f"Error exporting PDFs: {str(e)}")
             raise
@@ -698,11 +765,13 @@ def main():
     colored_file = renderer.render_colored_grid()
     combined_file = renderer.render_combined_grid()
     key_file = renderer.render_legend()
+    bw_key_file = renderer.render_bw_legend()
     
     print(f"Mystery coloring grid saved to: {grid_file}")
     print(f"Colored grid saved to: {colored_file}")
     print(f"Combined grid saved to: {combined_file}")
     print(f"Color key saved to: {key_file}")
+    print(f"B&W color key saved to: {bw_key_file}")
 
 
 if __name__ == "__main__":
