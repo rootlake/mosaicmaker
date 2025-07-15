@@ -23,6 +23,9 @@ import svglib.svglib
 # Constants
 LETTER_WIDTH_INCHES = 8.5
 LETTER_HEIGHT_INCHES = 11.0
+# KDP artwork dimensions (8 x 10.5 inches)
+KDP_ARTWORK_WIDTH = 8.0
+KDP_ARTWORK_HEIGHT = 10.5
 DPI = 300
 MARGIN_PERCENT = 5
 DEFAULT_COLORS = 12
@@ -134,15 +137,13 @@ class ImageProcessor:
         self.color_names = {}  # Maps cluster index to color name
         
     def load_and_resize(self):
-        """Load image and resize to fit letter-sized page with margins."""
+        """Load image and resize to fit KDP artwork dimensions (8 x 10.5 inches)."""
         # Load image
         self.image = Image.open(self.image_path).convert('RGB')
         
-        # Calculate dimensions with margins
-        margin_w = int(LETTER_WIDTH_INCHES * DPI * MARGIN_PERCENT / 100)
-        margin_h = int(LETTER_HEIGHT_INCHES * DPI * MARGIN_PERCENT / 100)
-        max_width = int(LETTER_WIDTH_INCHES * DPI) - 2 * margin_w
-        max_height = int(LETTER_HEIGHT_INCHES * DPI) - 2 * margin_h
+        # Calculate dimensions for KDP artwork (8 x 10.5 inches)
+        max_width = int(KDP_ARTWORK_WIDTH * DPI)
+        max_height = int(KDP_ARTWORK_HEIGHT * DPI)
         
         # Resize maintaining aspect ratio
         width, height = self.image.size
@@ -259,48 +260,73 @@ class SVGRenderer:
             os.makedirs(OUTPUT_DIR)
         
     def render_grid(self):
-        """Render grid as SVG with numbered cells."""
-        # Create SVG drawing
+        """Render grid as SVG with numbered cells for KDP printing."""
+        # Create SVG drawing with KDP dimensions
         output_path = os.path.join(OUTPUT_DIR, f"{self.output_prefix}_grid{self.param_suffix}.svg")
+        
+        # KDP page dimensions in pixels at 300 DPI
+        page_width = int(LETTER_WIDTH_INCHES * DPI)
+        page_height = int(LETTER_HEIGHT_INCHES * DPI)
+        
+        # Calculate centering offsets for 8x10.5 artwork on 8.5x11 page
+        artwork_width = int(KDP_ARTWORK_WIDTH * DPI)
+        artwork_height = int(KDP_ARTWORK_HEIGHT * DPI)
+        offset_x = (page_width - artwork_width) // 2
+        offset_y = (page_height - artwork_height) // 2
+        
+        # Scale grid to fit artwork area
+        scale_x = artwork_width / self.grid.width
+        scale_y = artwork_height / self.grid.height
+        scale = min(scale_x, scale_y)
+        
+        scaled_width = int(self.grid.width * scale)
+        scaled_height = int(self.grid.height * scale)
+        
+        # Center the scaled grid within the artwork area
+        grid_offset_x = offset_x + (artwork_width - scaled_width) // 2
+        grid_offset_y = offset_y + (artwork_height - scaled_height) // 2
+        
         dwg = svgwrite.Drawing(
             output_path,
-            size=(f"{self.grid.width}px", f"{self.grid.height}px")
+            size=(f"{page_width}px", f"{page_height}px")
         )
         
-        # Add white background
+        # Add white background for entire page
         dwg.add(dwg.rect(
             insert=(0, 0),
-            size=(self.grid.width, self.grid.height),
+            size=(page_width, page_height),
             fill="white"
         ))
         
-        # Draw grid cells
+        # Draw grid cells with scaling and centering
+        scaled_cell_size = self.grid.grid_size * scale
+        
         for row in range(self.grid.rows):
             for col in range(self.grid.cols):
-                # Get cell coordinates
-                x = col * self.grid.grid_size
-                y = row * self.grid.grid_size
+                # Get scaled cell coordinates
+                x = grid_offset_x + col * scaled_cell_size
+                y = grid_offset_y + row * scaled_cell_size
                 
                 # Draw cell outline
                 dwg.add(dwg.rect(
                     insert=(x, y),
-                    size=(self.grid.grid_size, self.grid.grid_size),
+                    size=(scaled_cell_size, scaled_cell_size),
                     fill="none",
                     stroke="black",
-                    stroke_width=1
+                    stroke_width=max(1, scale)
                 ))
                 
                 # Get color index and corresponding number
                 color_idx = self.grid.grid_data[row, col]
                 number = self.grid.number_map[color_idx]
                 
-                # Add number to cell
+                # Add number to cell with scaled font
                 dwg.add(dwg.text(
                     str(number),
-                    insert=(x + self.grid.grid_size//2, y + self.grid.grid_size//2),
+                    insert=(x + scaled_cell_size//2, y + scaled_cell_size//2),
                     text_anchor="middle",
                     dominant_baseline="middle",
-                    font_size=self.grid.grid_size//3,
+                    font_size=max(8, scaled_cell_size//3),
                     font_family="Arial, Helvetica, sans-serif",
                     font_weight="bold",
                     fill="gray",
@@ -312,20 +338,52 @@ class SVGRenderer:
         return output_path
     
     def render_colored_grid(self):
-        """Render colored grid without numbers."""
-        # Create SVG drawing
+        """Render colored grid without numbers for KDP printing."""
+        # Create SVG drawing with KDP dimensions
         output_path = os.path.join(OUTPUT_DIR, f"{self.output_prefix}_colored{self.param_suffix}.svg")
+        
+        # KDP page dimensions in pixels at 300 DPI
+        page_width = int(LETTER_WIDTH_INCHES * DPI)
+        page_height = int(LETTER_HEIGHT_INCHES * DPI)
+        
+        # Calculate centering offsets for 8x10.5 artwork on 8.5x11 page
+        artwork_width = int(KDP_ARTWORK_WIDTH * DPI)
+        artwork_height = int(KDP_ARTWORK_HEIGHT * DPI)
+        offset_x = (page_width - artwork_width) // 2
+        offset_y = (page_height - artwork_height) // 2
+        
+        # Scale grid to fit artwork area
+        scale_x = artwork_width / self.grid.width
+        scale_y = artwork_height / self.grid.height
+        scale = min(scale_x, scale_y)
+        
+        scaled_width = int(self.grid.width * scale)
+        scaled_height = int(self.grid.height * scale)
+        
+        # Center the scaled grid within the artwork area
+        grid_offset_x = offset_x + (artwork_width - scaled_width) // 2
+        grid_offset_y = offset_y + (artwork_height - scaled_height) // 2
+        
         dwg = svgwrite.Drawing(
             output_path,
-            size=(f"{self.grid.width}px", f"{self.grid.height}px")
+            size=(f"{page_width}px", f"{page_height}px")
         )
         
-        # Draw grid cells
+        # Add white background for entire page
+        dwg.add(dwg.rect(
+            insert=(0, 0),
+            size=(page_width, page_height),
+            fill="white"
+        ))
+        
+        # Draw grid cells with scaling and centering
+        scaled_cell_size = self.grid.grid_size * scale
+        
         for row in range(self.grid.rows):
             for col in range(self.grid.cols):
-                # Get cell coordinates
-                x = col * self.grid.grid_size
-                y = row * self.grid.grid_size
+                # Get scaled cell coordinates
+                x = grid_offset_x + col * scaled_cell_size
+                y = grid_offset_y + row * scaled_cell_size
                 
                 # Get color index and RGB color
                 color_idx = self.grid.grid_data[row, col]
@@ -334,10 +392,10 @@ class SVGRenderer:
                 # Draw colored cell
                 dwg.add(dwg.rect(
                     insert=(x, y),
-                    size=(self.grid.grid_size, self.grid.grid_size),
+                    size=(scaled_cell_size, scaled_cell_size),
                     fill=f"rgb({rgb[0]}, {rgb[1]}, {rgb[2]})",
                     stroke="black",
-                    stroke_width=1
+                    stroke_width=max(1, scale)
                 ))
                 
         # Save SVG
@@ -345,20 +403,52 @@ class SVGRenderer:
         return output_path
     
     def render_combined_grid(self):
-        """Render colored grid with numbers."""
-        # Create SVG drawing
+        """Render colored grid with numbers for KDP printing."""
+        # Create SVG drawing with KDP dimensions
         output_path = os.path.join(OUTPUT_DIR, f"{self.output_prefix}_combined{self.param_suffix}.svg")
+        
+        # KDP page dimensions in pixels at 300 DPI
+        page_width = int(LETTER_WIDTH_INCHES * DPI)
+        page_height = int(LETTER_HEIGHT_INCHES * DPI)
+        
+        # Calculate centering offsets for 8x10.5 artwork on 8.5x11 page
+        artwork_width = int(KDP_ARTWORK_WIDTH * DPI)
+        artwork_height = int(KDP_ARTWORK_HEIGHT * DPI)
+        offset_x = (page_width - artwork_width) // 2
+        offset_y = (page_height - artwork_height) // 2
+        
+        # Scale grid to fit artwork area
+        scale_x = artwork_width / self.grid.width
+        scale_y = artwork_height / self.grid.height
+        scale = min(scale_x, scale_y)
+        
+        scaled_width = int(self.grid.width * scale)
+        scaled_height = int(self.grid.height * scale)
+        
+        # Center the scaled grid within the artwork area
+        grid_offset_x = offset_x + (artwork_width - scaled_width) // 2
+        grid_offset_y = offset_y + (artwork_height - scaled_height) // 2
+        
         dwg = svgwrite.Drawing(
             output_path,
-            size=(f"{self.grid.width}px", f"{self.grid.height}px")
+            size=(f"{page_width}px", f"{page_height}px")
         )
         
-        # Draw grid cells
+        # Add white background for entire page
+        dwg.add(dwg.rect(
+            insert=(0, 0),
+            size=(page_width, page_height),
+            fill="white"
+        ))
+        
+        # Draw grid cells with scaling and centering
+        scaled_cell_size = self.grid.grid_size * scale
+        
         for row in range(self.grid.rows):
             for col in range(self.grid.cols):
-                # Get cell coordinates
-                x = col * self.grid.grid_size
-                y = row * self.grid.grid_size
+                # Get scaled cell coordinates
+                x = grid_offset_x + col * scaled_cell_size
+                y = grid_offset_y + row * scaled_cell_size
                 
                 # Get color index, RGB color, and number
                 color_idx = self.grid.grid_data[row, col]
@@ -368,10 +458,10 @@ class SVGRenderer:
                 # Draw colored cell
                 dwg.add(dwg.rect(
                     insert=(x, y),
-                    size=(self.grid.grid_size, self.grid.grid_size),
+                    size=(scaled_cell_size, scaled_cell_size),
                     fill=f"rgb({rgb[0]}, {rgb[1]}, {rgb[2]})",
                     stroke="black",
-                    stroke_width=1
+                    stroke_width=max(1, scale)
                 ))
                 
                 # Add number to cell (white or black depending on color brightness)
@@ -380,10 +470,10 @@ class SVGRenderer:
                 
                 dwg.add(dwg.text(
                     str(number),
-                    insert=(x + self.grid.grid_size//2, y + self.grid.grid_size//2),
+                    insert=(x + scaled_cell_size//2, y + scaled_cell_size//2),
                     text_anchor="middle",
                     dominant_baseline="middle",
-                    font_size=self.grid.grid_size//3,
+                    font_size=max(8, scaled_cell_size//3),
                     font_family="Arial, Helvetica, sans-serif",
                     font_weight="bold",
                     fill=text_color
